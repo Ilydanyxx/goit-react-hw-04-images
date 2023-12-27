@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import Searchbar from './Searchbar/Searchbar';
 import ImageGallery from './ImageGallery/ImageGallery';
 import getGallery from 'api/api';
@@ -9,80 +9,60 @@ import Modal from './Modal/Modal';
 
 const PER_PAGE = '12';
 
-export default class App extends Component {
-  state = {
-    isLoading: false,
-    isError: false,
-    filter: '',
-    pictures: [],
-    page: 1,
-    pictureId: null,
-    showModal: false,
-  };
+export default function App() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [query, setQuery] = useState('');
+  const [pictures, setPictures] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pictureId, setPictureId] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
-  async componentDidUpdate(_, prevState) {
-    if (
-      prevState.filter !== this.state.filter ||
-      prevState.page !== this.state.page
-    ) {
-      this.setState({
-        isLoading: true,
-      });
-      try {
-        const response = await getGallery(this.state.filter, this.state.page);
-        if (response.length === 0) {
-          Notify.failure('Sorry, no images for your request :(');
-        }
-        this.setState(prevState => ({
-          pictures: [...prevState.pictures, ...response],
-        }));
-      } catch (error) {
-        this.setState({
-          isError: error.message,
-        });
-      } finally {
-        this.setState({
-          isLoading: false,
-        });
+  useEffect(() => {
+    const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await getGallery(query, page);
+      if (response.length === 0) {
+        Notify.failure('Sorry, no images for your request :(');
+      } else {
+        setPictures(prevPictures => [...prevPictures, ...response]);
       }
+    } catch (error) {
+      console.error(error.message);
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
+    if (query && page > 0) {
+      fetchData();
+    }
+  }, [query, page]);
 
-  handleSubmit = async e => {
+  const handleSubmit = async e => {
     if (e) {
       e.preventDefault();
     }
     const inputValue = e.currentTarget.elements.query.value;
     if (inputValue === '') {
       Notify.failure('Please type something!');
- 
       return;
     }
-    if (inputValue !== this.state.filter) {
-      this.setState({
-
-        pictures: [],
-        filter: inputValue,
-        page: 1,
-      });
+    if (inputValue !== query) {
+      setIsLoading(true);
+      setPictures([]);
+      setQuery(inputValue);
+      setPage(1);
     }
   };
 
-  addMorePages = async () => {
+  const addMorePages = async () => {
     this.setState(prevState => ({ page: prevState.page + 1, isLoading: true }));
   };
 
-  toggleModal = id => {
-    this.setState({
-      pictureId: id,
-    });
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-    }));
+  const toggleModal = id => {
+    setPictureId(id);
+    setShowModal(prevState => !prevState);
   };
-
-  render() {
-    const { pictures, isLoading, showModal, pictureId } = this.state;
 
     return (
       <div
@@ -97,25 +77,25 @@ export default class App extends Component {
           color: '#010101',
         }}
       >
-        <Searchbar onSubmit={this.handleSubmit} />
+        <Searchbar onSubmit={handleSubmit} />
 
         <ImageGallery
-          pictures={this.state.pictures}
-          toggleModal={this.toggleModal}
+          pictures={pictures}
+          toggleModal={toggleModal}
         />
         {isLoading && <Loader />}
         {pictures.length >= PER_PAGE && pictures.length % PER_PAGE === 0 && (
-          <Button onClick={this.addMorePages} />
+          <Button onClick={addMorePages} />
         )}
         {showModal && (
           <Modal
             pictures={pictures}
             id={pictureId}
-            onClose={this.toggleModal}
-            showModal={this.state.showModal}
+            onClose={toggleModal}
+            showModal={showModal}
           />
         )}
       </div>
     );
-  }
 }
+
