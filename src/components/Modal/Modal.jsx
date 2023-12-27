@@ -38,9 +38,7 @@ export default function Modal({ pictures, id, onClose, showModal }) {
         onClick={this.handleModalClick}
       >
         <div id="modal" className={css.modal}>
-          {this.state.pictureLink && (
-            <img src={this.state.pictureLink} alt={this.state.pictureAlt} />
-          )}
+        {pictureLink && <img src={pictureLink} alt={pictureAlt} />}
         </div>
       </div>,
       modalRoot
