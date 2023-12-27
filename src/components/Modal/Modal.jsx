@@ -35,7 +35,7 @@ export default function Modal({ pictures, id, onClose, showModal }) {
       <div
         id="backdrop"
         className={css.overlay}
-        onClick={this.handleModalClick}
+        onClick={handleModalClick}
       >
         <div id="modal" className={css.modal}>
         {pictureLink && <img src={pictureLink} alt={pictureAlt} />}
